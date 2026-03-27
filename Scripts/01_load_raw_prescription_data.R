@@ -134,3 +134,32 @@ antidepress_df <- full_antidepress_list[[1]]
 antidepress_grouped <- antidepress_df %>%
   group_by(bnf_code, row_id, row_name) %>%
   summarise(total_cost = sum(actual_cost), total_items = sum(items), total_quantity = sum(quantity))
+
+
+#############################
+########### PAIN MEDICATIONS
+#############################
+
+#Read in BNF code file
+pain_df <- read_excel("Data/pain_medication_list.xlsx") 
+
+pain_df <- pain_df %>%
+  select(table, code, code_description, bnf_presentation_code)
+
+pain_codelist <- unique(pain_df$bnf_presentation_code)
+
+dates <- list('2024-07-01', '2024-08-01', '2024-09-01', '2024-10-01', '2024-11-01', '2024-12-01',
+              '2025-01-01', '2025-02-01', '2025-03-01', '2025-04-01', '2025-05-01', '2025-06-01')
+
+
+full_pain_list <- read_presc_function(codes = pain_codelist)
+
+# Create df
+full_pain_df <- unique(full_pain_list[[1]])
+
+#Group df
+painmed_grouped <- full_pain_df %>%
+  group_by(bnf_code, row_id, row_name) %>%
+  summarise(total_cost = sum(actual_cost), total_items = sum(items), total_quantity = sum(quantity))
+
+

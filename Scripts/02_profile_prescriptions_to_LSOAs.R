@@ -54,6 +54,12 @@ LSOA_antipsych_summed <- join_practices_prescriptions(prescription_df = antipsyc
 
 LSOA_antidepress_summed <- join_practices_prescriptions(prescription_df = antidepress_grouped, label = 'anti_depressants')
 
+#######################
+##### PAIN MEDICATIONS
+######################
+
+LSOA_pain_summed <- join_practices_prescriptions(prescription_df = painmed_grouped, label = 'pain_medications')
+
 
 
 ################################
@@ -98,3 +104,7 @@ all_eng_pres <- rbind(LSOA_antianx_summed, LSOA_antidepress_summed, LSOA_antipsy
 write.csv(all_eng_pres, 'Outputs/england_all_prescriptions.csv')
 
 hist((LSOA_inhaler_summed$items[LSOA_inhaler_summed$LSOA_CODE != 'EMPTY']))
+
+# PAIN MEDS
+write.csv(LSOA_pain_summed, 'Outputs/LSOA_painmeds.csv')
+
