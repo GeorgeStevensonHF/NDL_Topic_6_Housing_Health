@@ -3,8 +3,8 @@ inhalers_df <- read_excel("Data/inhalers_list.xlsx")
 
 inhaler_codelist <- unique(inhalers_df$bnf_presentation_code)
 
-dates <- c('202407', '202408', '202409', '202410', '202411', '202412', '202501',
-           '202502', '202503', '202504', '202505', '202506')
+dates <- c('202408', '202409', '202410', '202411', '202412', '202501',
+           '202502', '202503', '202504', '202505', '202506', '202507')
 
 ### SCOTLAND
 
@@ -21,9 +21,9 @@ scotland_data_list <- lapply(1:length(dates), function(i){
                                   PaidQuantity = col_double(),
                                   GrossIngredientCost = col_double(),
                                   PaidDateMonth = col_character()
-                                  ) )
+                 ) )
   
-  filtered_df <- df %>% filter(BNFItemCode %in% inhaler_codelist | str_detect(BNFItemCode, '^040102') | str_detect(BNFItemCode, '^0402') | str_detect(BNFItemCode, '^0403'))
+  filtered_df <- df %>% filter(BNFItemCode %in% inhaler_codelist | BNFItemCode %in% pain_codelist | str_detect(BNFItemCode, '^040102') | str_detect(BNFItemCode, '^0402') | str_detect(BNFItemCode, '^0403'))
   
   return(filtered_df)
   
@@ -112,7 +112,21 @@ sct_antipsych_by_dz <- all_scotland_data %>%
   mutate(quantity_per_dz = quantity*prop_of_subHSCP) %>%
   mutate(cost_per_dz = cost*prop_of_subHSCP)
 
-sct_allpres <- rbind(sct_inhalers_by_dz, sct_antianx_by_dz, sct_antidep_by_dz, sct_antipsych_by_dz)
+sct_painmed_by_dz <- all_scotland_data %>%
+  filter(BNFItemCode %in% pain_codelist) %>%
+  group_by(GPPractice) %>%
+  summarise(items = sum(NumberOfPaidItems), quantity = sum(PaidQuantity), cost = sum(GrossIngredientCost)) %>%
+  mutate(item = 'painmed') %>%
+  full_join(., practices_to_HSCP, by = join_by(GPPractice == PracticeCode)) %>%
+  group_by(SubHSCPName, item) %>%
+  summarise(items = sum(items), quantity = sum(quantity), cost = sum(cost)) %>%
+  full_join(., sct_dz_to_hscp, by = 'SubHSCPName') %>%
+  mutate(items_per_dz = items*prop_of_subHSCP) %>%
+  mutate(quantity_per_dz = quantity*prop_of_subHSCP) %>%
+  mutate(cost_per_dz = cost*prop_of_subHSCP)
+
+
+sct_allpres <- rbind(sct_inhalers_by_dz, sct_antianx_by_dz, sct_antidep_by_dz, sct_antipsych_by_dz, )
 
 write.csv(sct_allpres, 'Outputs/sct_all_prescriptions.csv')
 
@@ -173,7 +187,7 @@ wales_inhalers_by_lsoa <- all_wales_data %>%
   mutate(items_per_lsoa = items*prop_of_locality) %>%
   mutate(cost_per_lsoa = cost*prop_of_locality) %>%
   mutate(quantity_per_lsoa = quantity*prop_of_locality)
-  
+
 wales_antidep_by_lsoa <- all_wales_data %>%
   filter(str_detect(BNFCode, '^0403')) %>%
   group_by(Locality) %>%
@@ -183,8 +197,8 @@ wales_antidep_by_lsoa <- all_wales_data %>%
   mutate(items_per_lsoa = items*prop_of_locality) %>%
   mutate(cost_per_lsoa = cost*prop_of_locality) %>%
   mutate(quantity_per_lsoa = quantity*prop_of_locality)
-  
-  
+
+
 wales_antianx_by_lsoa <- all_wales_data %>%
   filter(str_detect(BNFCode, '^040102')) %>%
   group_by(Locality) %>%
@@ -204,8 +218,7 @@ wales_antipsych_by_lsoa <- all_wales_data %>%
   mutate(items_per_lsoa = items*prop_of_locality) %>%
   mutate(cost_per_lsoa = cost*prop_of_locality) %>%
   mutate(quantity_per_lsoa = quantity*prop_of_locality)
-  
+
 wales_allpres <- rbind(wales_inhalers_by_lsoa, wales_antianx_by_lsoa, wales_antidep_by_lsoa, wales_antipsych_by_lsoa)
 
 write.csv(wales_allpres, 'Outputs/wales_all_prescriptions.csv')
-

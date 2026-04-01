@@ -1,3 +1,8 @@
+
+# 01 Loading prescriptions data ################################################
+# updated 31/03/2026 to take August 24 - August 25 matching FP data ############
+
+
 library(openxlsx)
 library(httr)
 library(jsonlite)
@@ -27,8 +32,8 @@ inhalers_df <- read_excel("Data/inhalers_list.xlsx")
 
 inhaler_codelist <- unique(inhalers_df$bnf_presentation_code)
 
-dates <- list('2024-07-01', '2024-08-01', '2024-09-01', '2024-10-01', '2024-11-01', '2024-12-01',
-           '2025-01-01', '2025-02-01', '2025-03-01', '2025-04-01', '2025-05-01', '2025-06-01')
+dates <- list('2024-08-01', '2024-09-01', '2024-10-01', '2024-11-01', '2024-12-01', 
+              '2025-01-01', '2025-02-01', '2025-03-01', '2025-04-01', '2025-05-01', '2025-06-01', '2025-07-01')
 
 
 full_inhaler_list <- list()
@@ -70,7 +75,7 @@ read_presc_function <- function(codes){
   return(full_list)
   
 }
-  
+
 full_inhaler_list <- read_presc_function(codes = inhaler_codelist)
 
 # Create df
@@ -148,18 +153,19 @@ pain_df <- pain_df %>%
 
 pain_codelist <- unique(pain_df$bnf_presentation_code)
 
-dates <- list('2024-07-01', '2024-08-01', '2024-09-01', '2024-10-01', '2024-11-01', '2024-12-01',
-              '2025-01-01', '2025-02-01', '2025-03-01', '2025-04-01', '2025-05-01', '2025-06-01')
-
-
-full_pain_list <- read_presc_function(codes = pain_codelist)
-
+#full_pain_list <- read_presc_function(codes = pain_codelist)
+#
 # Create df
-full_pain_df <- unique(full_pain_list[[1]])
-
+#full_pain_df <- unique(full_pain_list[[1]])
+#
 #Group df
-painmed_grouped <- full_pain_df %>%
-  group_by(bnf_code, row_id, row_name) %>%
-  summarise(total_cost = sum(actual_cost), total_items = sum(items), total_quantity = sum(quantity))
+#painmed_grouped <- full_pain_df %>%
+#  group_by(bnf_code, row_id, row_name) %>%
+#  summarise(total_cost = sum(actual_cost), total_items = sum(items), total_quantity = sum(quantity))
 
+setwd("C:/Users/georges/OneDrive - The Health Foundation/Documents/NDL")
+getwd()
 
+LSOA_painmed_summed <- read.csv("LSOA_painmeds.csv")
+LSOA_painmed_summed <- LSOA_painmed_summed %>%
+  select(!X)
