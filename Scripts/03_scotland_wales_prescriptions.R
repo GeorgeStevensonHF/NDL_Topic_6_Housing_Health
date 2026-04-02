@@ -126,9 +126,9 @@ sct_painmed_by_dz <- all_scotland_data %>%
   mutate(cost_per_dz = cost*prop_of_subHSCP)
 
 
-sct_allpres <- rbind(sct_inhalers_by_dz, sct_antianx_by_dz, sct_antidep_by_dz, sct_antipsych_by_dz, )
+sct_allpres <- rbind(sct_inhalers_by_dz, sct_antianx_by_dz, sct_antidep_by_dz, sct_antipsych_by_dz, sct_painmed_by_dz)
 
-write.csv(sct_allpres, 'Outputs/sct_all_prescriptions.csv')
+write.csv(sct_allpres, 'Outputs/sct_all_prescriptions_new.csv')
 
 
 ###############################
@@ -155,7 +155,7 @@ wales_data_list <- lapply(1:length(dates), function(i){
                                   Period = col_character()
                  ) )
   
-  filtered_df <- df %>% filter(BNFCode %in% inhaler_codelist | str_detect(BNFCode, '^040102') | str_detect(BNFCode, '^0402') | str_detect(BNFCode, '^0403'))
+  filtered_df <- df %>% filter(BNFCode %in% inhaler_codelist | BNFCode %in% pain_codelist | str_detect(BNFCode, '^040102') | str_detect(BNFCode, '^0402') | str_detect(BNFCode, '^0403'))
   
   return(filtered_df)
   
@@ -219,6 +219,17 @@ wales_antipsych_by_lsoa <- all_wales_data %>%
   mutate(cost_per_lsoa = cost*prop_of_locality) %>%
   mutate(quantity_per_lsoa = quantity*prop_of_locality)
 
-wales_allpres <- rbind(wales_inhalers_by_lsoa, wales_antianx_by_lsoa, wales_antidep_by_lsoa, wales_antipsych_by_lsoa)
+wales_painmed_by_lsoa <- all_wales_data %>%
+  filter(BNFCode %in% pain_codelist) %>%
+  group_by(Locality) %>%
+  summarise(items = sum(Items), cost = sum(ActCost), quantity = sum(Quantity)) %>%
+  mutate(item = 'painmed') %>%
+  right_join(wales_hb_reg_by_lsoa, ., by = join_by(Code == Locality)) %>%
+  mutate(items_per_lsoa = items*prop_of_locality) %>%
+  mutate(cost_per_lsoa = cost*prop_of_locality) %>%
+  mutate(quantity_per_lsoa = quantity*prop_of_locality)
 
-write.csv(wales_allpres, 'Outputs/wales_all_prescriptions.csv')
+
+wales_allpres <- rbind(wales_inhalers_by_lsoa, wales_antianx_by_lsoa, wales_antidep_by_lsoa, wales_antipsych_by_lsoa, wales_painmed_by_lsoa)
+
+write.csv(wales_allpres, 'Outputs/wales_all_prescriptions_new.csv')
