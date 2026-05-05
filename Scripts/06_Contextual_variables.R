@@ -79,8 +79,8 @@ ethnicity_data <- ethnicity_data %>%
   pivot_wider(
     names_from = `Ethnic group (20 categories)`,
     values_from = Observation,
-    values_fill = 0) %>%
-  rename(LS)
+    values_fill = 0)
+
 
 # CLEAN ########################################################################
 

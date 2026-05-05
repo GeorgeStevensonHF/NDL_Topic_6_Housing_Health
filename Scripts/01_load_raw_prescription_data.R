@@ -14,12 +14,10 @@ library(data.table)
 library(stringr)
 library(tidyr)
 
-# Note: dates covered: July 2024 - June 2025
-
-# Cat 1: inhalers
+# Cat 1: Inhalers
 # Cat 2: Anti-anxiety meds
 # Cat 3: Anti-depressants
-
+# Cat 4: Pain medication
 
 ####################
 ########### INHALERS
@@ -152,19 +150,15 @@ pain_df <- pain_df %>%
 
 pain_codelist <- unique(pain_df$bnf_presentation_code)
 
-#full_pain_list <- read_presc_function(codes = pain_codelist)
-#
+full_pain_list <- read_presc_function(codes = pain_codelist)
+
 # Create df
-#full_pain_df <- unique(full_pain_list[[1]])
-#
-#Group df
-#painmed_grouped <- full_pain_df %>%
-#  group_by(bnf_code, row_id, row_name) %>%
-#  summarise(total_cost = sum(actual_cost), total_items = sum(items), total_quantity = sum(quantity))
+full_pain_df <- bind_rows(full_pain_list)
 
-setwd("C:/Users/georges/OneDrive - The Health Foundation/Documents/NDL")
-getwd()
+full_pain_df <- full_pain_df %>% select(!(X1:X8))
 
-LSOA_painmed_summed <- read.csv("LSOA_painmeds.csv")
-LSOA_painmed_summed <- LSOA_painmed_summed %>%
-  select(!X)
+# Group df
+painmed_grouped <- full_pain_df %>%
+  group_by(bnf_code, row_id, row_name) %>%
+  summarise(total_cost = sum(actual_cost), total_items = sum(items), total_quantity = sum(quantity))
+
