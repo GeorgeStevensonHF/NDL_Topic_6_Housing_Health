@@ -70,9 +70,9 @@ overcrowding_data <- overcrowding_data %>%
 
 
 # Ethnicity data
-ethnicity_data <- read_csv("Data/Ethnicity by LSOA.csv")
+eng_ethnicity_data <- read_csv("Data/Ethnicity by LSOA.csv")
 
-ethnicity_data <- ethnicity_data %>%
+eng_ethnicity_data <- eng_ethnicity_data %>%
   group_by(`Lower layer Super Output Areas Code`,
            `Ethnic group (20 categories)`) %>%
   summarise(Observation = sum(Observation), .groups = "drop") %>%
@@ -81,11 +81,87 @@ ethnicity_data <- ethnicity_data %>%
     values_from = Observation,
     values_fill = 0)
 
-
-# CLEAN ########################################################################
-
-ethnicity_data <- ethnicity_data %>%
+eng_ethnicity_data <- eng_ethnicity_data %>%
   rename(LSOA_CODE = "Lower layer Super Output Areas Code")
+
+groups <- tibble( 
+  col = colnames(eng_ethnicity_data)[-1],
+  group = str_extract(col, "^[^:]+"))
+    
+eng_ethnicity_data <- eng_ethnicity_data %>%
+  pivot_longer(
+    cols = -LSOA_CODE,
+    names_to = "col",
+    values_to = "count"
+  ) %>%
+  left_join(groups, by = "col")
+  
+eng_ethnicity_data <- eng_ethnicity_data %>%
+  group_by(LSOA_CODE, group) %>%
+  summarise(total = sum(count, na.rm = TRUE), .groups = "drop")
+
+eng_ethnicity_data <- eng_ethnicity_data %>%
+  pivot_wider(
+  names_from = `group`,
+  values_from = total,
+  values_fill = 0)
+
+eng_ethnicity_data <- eng_ethnicity_data %>%
+  group_by(LSOA_CODE) %>%
+  mutate(Total = sum(`Asian, Asian British or Asian Welsh`, `Black, Black British, Black Welsh, Caribbean or African`, `Does not apply`, `Mixed or Multiple ethnic groups`, White, `Other ethnic group`),
+         All_other_ethnic_groups = sum(`Asian, Asian British or Asian Welsh`, `Black, Black British, Black Welsh, Caribbean or African`, `Does not apply`, `Mixed or Multiple ethnic groups`, `Other ethnic group`),
+         Perc_other_than_white = All_other_ethnic_groups/Total)
+
+eng_ethnicity_data <- eng_ethnicity_data %>%
+  mutate( 
+    across(
+      .cols = where(is.numeric) & !c(Perc_other_than_white),
+      .fns = ~ {
+        x <- as.character(.x)
+        ifelse(as.numeric(x)< 10, "*", x)}))
+
+# SCOTLAND
+sco_ethnicity_data <- read.xlsx("Data/scotland_ethnicity_datazone_data.xlsx")
+colnames(sco_ethnicity_data) <- as.character(sco_ethnicity_data[7, ])
+sco_ethnicity_data <- sco_ethnicity_data[-c(1:8), ]
+sco_ethnicity_data <- sco_ethnicity_data[-c(6977:6979), ]
+
+sco_ethnicity_data <- sco_ethnicity_data %>%
+  select(-`All People`, -`White: Total`, -`Asian, Asian Scottish or Asian British: Total`, -`African: Total`, -`Caribbean or Black: Total`, -`Other ethnic groups: Total`) %>%
+  rename(`White: Other` = "Other White")
+
+sco_ethnicity_data <- sco_ethnicity_data %>%
+  rename(DZ_2011 = "Ethnic Group")
+  
+groups <- tibble( 
+    col = colnames(sco_ethnicity_data)[-1],
+    group = str_extract(col, "^[^:]+"))
+
+sco_ethnicity_data <- sco_ethnicity_data %>%
+  pivot_longer(
+    cols = -DZ_2011,
+    names_to = "col",
+    values_to = "count"
+  ) %>%
+  left_join(groups, by = "col")
+
+sco_ethnicity_data <- sco_ethnicity_data %>%
+  group_by(DZ_2011, group) %>%
+  summarise(total = sum(as.numeric(count), na.rm = TRUE), .groups = "drop")
+
+sco_ethnicity_data <- sco_ethnicity_data %>%
+  pivot_wider(
+    names_from = `group`,
+    values_from = total,
+    values_fill = 0)
+
+sco_ethnicity_data <- sco_ethnicity_data %>%
+  group_by(DZ_2011) %>%
+  mutate(Total = sum(African, `Asian, Asian Scottish or Asian British`, `Caribbean or Black`, `Mixed or multiple ethnic group`, `Other ethnic groups`, White),
+         All_other_ethnic_groups = sum(African, `Asian, Asian Scottish or Asian British`, `Caribbean or Black`, `Mixed or multiple ethnic group`, `Other ethnic groups`),
+         Perc_other_than_white = All_other_ethnic_groups/Total)
+  
+# CLEAN ########################################################################
 
 overcrowding_data <- overcrowding_data %>%
   rename(LSOA_CODE = "LSOA code")
@@ -96,9 +172,10 @@ rm(LSOA_smoking_prevalence)
 rm(patients_by_practice)
 rm(QOF_smoking_data)
 
-write.csv(ethnicity_data, 'Outputs/ethnicity_lsoa_data.csv')
+write.csv(eng_ethnicity_data, 'Outputs/ethnicity_lsoa_data.csv')
 write.csv(overcrowding_data, 'Outputs/overcrowding_lsoa_data.csv')
 write.csv(smoking_data, 'Outputs/smoking_lsoa_data.csv')
+write.csv(sco_ethnicity_data, 'Outputs/sco_ethnicity_data.csv')
 
 
 
